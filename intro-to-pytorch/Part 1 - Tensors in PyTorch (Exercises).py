@@ -94,6 +94,7 @@ bias = torch.randn((1, 1))
 
 #%%
 ## Calculate the output of this network using the weights and bias tensors
+activation((features * weights).sum() + bias)
 
 #%% [markdown]
 # You can do the multiplication and sum in the same operation using a matrix multiplication. In general, you'll want to use matrix multiplications since they are more efficient and accelerated using modern libraries and high-performance computing on GPUs.
@@ -127,6 +128,7 @@ bias = torch.randn((1, 1))
 
 #%%
 ## Calculate the output of this network using matrix multiplication
+activation(torch.mm(features, weights.view(5, 1)) + bias)
 
 #%% [markdown]
 # ### Stack them up!
@@ -183,6 +185,8 @@ B2 = torch.randn((1, n_output))
 
 #%%
 ## Your solution here
+act_h1 = activation(torch.mm(features, W1) + B1)
+activation(torch.mm(act_h1, W2) + B2)
 
 #%% [markdown]
 # If you did this correctly, you should see the output `tensor([[ 0.3171]])`.
