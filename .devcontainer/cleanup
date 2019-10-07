@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Use docker images while docker-compose doesn't support --gpus argument
+# docker images
+docker stop vsc-deep-learning-v2-pytorch-1dfc16a664d8e6bef1aec7855e095e12
+docker rm vsc-deep-learning-v2-pytorch-1dfc16a664d8e6bef1aec7855e095e12
+docker volume rm deep-learning-pytorch_devcontainer_vscode-server

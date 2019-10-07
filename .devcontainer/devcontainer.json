@@ -1,0 +1,42 @@
+{
+  "name": "deep-learning-pytorch",  
+  // Use docker while docker-compose doesn't support --gpus
+  "dockerFile": "pytorch.dockerfile",
+  "context": "..",  
+  "appPort": "6006:6006",
+  "workspaceMount": "type=bind,src=${localWorkspaceFolder},dst=/workspace",
+  "workspaceFolder": "/workspace",
+  "runArgs": [
+    "--mount", "type=bind,src=${env:HOME}/.gitconfig,dst=/home/pytorch/.gitconfig",
+    "--mount", "type=volume,src=deep-learning-pytorch_devcontainer_vscode-server,dst=/home/pytorch/.vscode-server",
+    "--gpus", "all"],
+  "extensions": [
+    "ms-python.python",
+    "VisualStudioExptTeam.vscodeintellicode",
+    "eamodio.gitlens"
+  ],
+  "settings": {
+    // Save
+    "files.autoSave": "afterDelay",
+    // Format
+    // "editor.formatOnSave": true,
+    "editor.detectIndentation": false,
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    // Ignore files
+    "files.exclude": {
+      "**/.git": true,
+      "**/.ipynb_checkpoints": true
+    },
+    // Ignore for watching
+    "files.watcherExclude": {
+      "**/.git/**": true
+    },
+    // Python
+    "python.dataScience.enableAutoMoveToNextCell": false,
+    // GitLens
+    "gitlens.statusBar.command": "gitlens.toggleFileBlame",
+    "gitlens.currentLine.enabled": false,
+    "gitlens.codeLens.enabled": false
+  }
+}
