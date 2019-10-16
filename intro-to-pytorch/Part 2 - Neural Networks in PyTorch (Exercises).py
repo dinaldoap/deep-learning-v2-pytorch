@@ -87,10 +87,22 @@ plt.imshow(images[1].numpy().squeeze(), cmap='Greys_r');
 
 #%%
 ## Your solution
+n_inputs = images.shape[1] * images.shape[2] * images.shape[3]
+n_hidden = 256
+n_out = 10
 
+W1 = torch.randn((n_inputs, n_hidden))
+W2 = torch.randn((n_hidden, n_out))
 
-out = # output of your network, should have shape (64,10)
+B1 = torch.randn(n_hidden)
+B2 = torch.randn(n_out)
 
+# flatted images
+inputs = images.view(images.shape[0], -1)
+act_h1 = torch.sigmoid(torch.mm(inputs, W1) + B1)
+# output of your network, should have shape (64,10)
+out = torch.mm(act_h1, W2) + B2
+out
 #%% [markdown]
 # Now we have 10 outputs for our network. We want to pass in an image to our network and get out a probability distribution over the classes that tells us the likely class(es) the image belongs to. Something that looks like this:
 # <img src='assets/image_distribution.png' width=500px>
@@ -109,7 +121,10 @@ out = # output of your network, should have shape (64,10)
 
 #%%
 def softmax(x):
-    ## TODO: Implement the softmax function here
+    exp = torch.exp(x)
+    total = exp.sum(dim=1)    
+    total = total.view(total.shape[0], 1)    
+    return exp / total
 
 # Here, out should be the output of the network in the previous excercise with shape (64,10)
 probabilities = softmax(out)
@@ -242,7 +257,21 @@ class Network(nn.Module):
 
 #%%
 ## Your solution here
+class MyNetwork(nn.Module):
+  def __init__(self):
+    super().__init__()
+    self.fc1 = nn.Linear(784, 128)
+    self.fc2 = nn.Linear(128, 64)
+    self.fc3 = nn.Linear(64, 10)
+  
+  def forward(self, x):
+    x = F.relu(self.fc1(x))
+    x = F.relu(self.fc2(x))
+    x = F.softmax(self.fc3(x), dim=1)
+    return x
 
+model = MyNetwork()
+model
 #%% [markdown]
 # ### Initializing weights and biases
 # 
