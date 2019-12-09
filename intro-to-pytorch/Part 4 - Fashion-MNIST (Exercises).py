@@ -53,14 +53,21 @@ helper.imshow(image[0,:]);
 # Here you should define your network. As with MNIST, each image is 28x28 which is a total of 784 pixels, and there are 10 classes. You should include at least one hidden layer. We suggest you use ReLU activations for the layers and to return the logits or log-softmax from the forward pass. It's up to you how many layers you add and the size of those layers.
 
 #%%
-input_size = image[0].shape[1] * image[0].shape[2]
-hidden_layer_size = 128
-output_layer_size = 10
-model = nn.Sequential(nn.Linear(input_size, hidden_layer_size),
+class Classifier(nn.Module):
+  def __init__(self):
+    super().__init__()
+    input_size = image[0].shape[1] * image[0].shape[2]
+    hidden_layer_size = 128
+    output_layer_size = 10
+    self.model = nn.Sequential(nn.Linear(input_size, hidden_layer_size),
                       nn.ReLU(),
                       nn.Linear(hidden_layer_size, output_layer_size),
                       nn.ReLU(),
                       nn.LogSoftmax(dim=1))
+
+  def forward(self, x):
+    x = x.view(x.shape[0], -1)
+    return self.model.forward(x)
 
 #%% [markdown]
 # # Train the network
@@ -78,6 +85,7 @@ model = nn.Sequential(nn.Linear(input_size, hidden_layer_size),
 
 #%%
 # Create the network, define the criterion and optimizer
+model = Classifier()
 criterion = nn.NLLLoss()
 optimizer = optim.SGD(model.parameters(), lr=0.1)
 
@@ -87,10 +95,10 @@ optimizer = optim.SGD(model.parameters(), lr=0.1)
 for epoch in range(10):
   running_loss = 0
   for images, labels in trainloader:
-    inputs = images.view(images.shape[0], -1)
-    optimizer.zero_grad()
-    outputs = model.forward(inputs)
+    outputs = model.forward(images)
     loss = criterion(outputs, labels)
+
+    optimizer.zero_grad()
     loss.backward()
     optimizer.step()
     running_loss += loss.item()
