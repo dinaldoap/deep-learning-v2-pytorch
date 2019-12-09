@@ -117,11 +117,16 @@ print(loss)
 # >**Exercise:** Build a model that returns the log-softmax as the output and calculate the loss using the negative log likelihood loss. Note that for `nn.LogSoftmax` and `F.log_softmax` you'll need to set the `dim` keyword argument appropriately. `dim=0` calculates softmax across the rows, so each column sums to 1, while `dim=1` calculates across the columns so each row sums to 1. Think about what you want the output to be and choose `dim` appropriately.
 
 #%%
-# TODO: Build a feed-forward network
-model = 
+# Build a feed-forward network
+model = nn.Sequential(nn.Linear(784, 128),
+                      nn.ReLU(),
+                      nn.Linear(128, 64),
+                      nn.ReLU(),
+                      nn.Linear(64, 10),
+                      nn.LogSoftmax(dim=0))
 
-# TODO: Define the loss
-criterion = 
+# Define the loss
+criterion = nn.NLLLoss()
 
 ### Run this to check your work
 # Get our data
@@ -295,9 +300,12 @@ for e in range(epochs):
         # Flatten MNIST images into a 784 long vector
         images = images.view(images.shape[0], -1)
     
-        # TODO: Training pass
-        
-        loss = 
+        # Training pass
+        optimizer.zero_grad()
+        logprobs = model.forward(images)
+        loss = criterion(logprobs, labels)
+        loss.backward()
+        optimizer.step()
         
         running_loss += loss.item()
     else:
