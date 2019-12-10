@@ -1,3 +1,4 @@
 .ipynb_checkpoints
 __pycache__/
 checkpoint.pth
+Cat_Dog_data/
