@@ -136,12 +136,13 @@ helper.imshow(images[0], normalize=False)
 data_dir = 'Cat_Dog_data'
 
 # Define transforms for the training data and testing data
-train_transforms = transforms.Compose([transforms.RandomHorizontalFlip(),
-                                        transforms.RandomRotation(180),
-                                        transforms.RandomResizedCrop(224),
-                                        transforms.ToTensor()])
+train_transforms = transforms.Compose([transforms.RandomRotation(180),
+                                       transforms.RandomResizedCrop(224),
+                                       transforms.RandomHorizontalFlip(),
+                                       transforms.ToTensor()])
 
-test_transforms = transforms.Compose([transforms.RandomResizedCrop(224),
+test_transforms = transforms.Compose([transforms.Resize(255),
+                                        transforms.CenterCrop(224),
                                         transforms.ToTensor()])
 
 # Pass transforms in here, then run the next cell to see how the transforms look
