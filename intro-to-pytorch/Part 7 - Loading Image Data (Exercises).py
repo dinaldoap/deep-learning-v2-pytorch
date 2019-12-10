@@ -90,9 +90,11 @@ import helper
 # %%
 data_dir = 'Cat_Dog_data/train'
 
-transform = # TODO: compose transforms here
-dataset = # TODO: create the ImageFolder
-dataloader = # TODO: use the ImageFolder dataset to create the DataLoader
+transform = transforms.Compose([transforms.Resize(255),
+                                transforms.CenterCrop(224),
+                                transforms.ToTensor()])
+dataset = datasets.ImageFolder('Cat_Dog_data', transform=transform)
+dataloader = torch.utils.data.DataLoader(dataset)
 
 
 # %%
@@ -133,11 +135,14 @@ helper.imshow(images[0], normalize=False)
 # %%
 data_dir = 'Cat_Dog_data'
 
-# TODO: Define transforms for the training data and testing data
-train_transforms = 
+# Define transforms for the training data and testing data
+train_transforms = transforms.Compose([transforms.RandomHorizontalFlip(),
+                                        transforms.RandomRotation(180),
+                                        transforms.RandomResizedCrop(224),
+                                        transforms.ToTensor()])
 
-test_transforms = 
-
+test_transforms = transforms.Compose([transforms.RandomResizedCrop(224),
+                                        transforms.ToTensor()])
 
 # Pass transforms in here, then run the next cell to see how the transforms look
 train_data = datasets.ImageFolder(data_dir + '/train', transform=train_transforms)
