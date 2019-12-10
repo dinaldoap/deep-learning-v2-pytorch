@@ -33,6 +33,7 @@ from torch import nn
 from torch import optim
 import torch.nn.functional as F
 from torchvision import datasets, transforms, models
+from tqdm import tqdm
 
 # %% [markdown]
 # Most of the pretrained models require the input to be 224x224 images. Also, we'll need to match the normalization used when the models were trained. Each color channel was normalized separately, the means are `[0.485, 0.456, 0.406]` and the standard deviations are `[0.229, 0.224, 0.225]`.
@@ -40,10 +41,21 @@ from torchvision import datasets, transforms, models
 # %%
 data_dir = 'Cat_Dog_data'
 
-# TODO: Define transforms for the training data and testing data
-train_transforms =
+# Define transforms for the training data and testing data
+train_transforms = transforms.Compose([
+    transforms.RandomRotation(180),
+    transforms.RandomHorizontalFlip(),
+    transforms.RandomResizedCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+])
 
-test_transforms =
+test_transforms = transforms.Compose([
+    transforms.Resize(255),
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+])
 
 # Pass transforms in here, then run the next cell to see how the transforms look
 train_data = datasets.ImageFolder(data_dir + '/train', transform=train_transforms)
@@ -131,6 +143,67 @@ for device in ['cpu', 'cuda']:
 # >**Exercise:** Train a pretrained models to classify the cat and dog images. Continue with the DenseNet model, or try ResNet, it's also a good model to try out first. Make sure you are only training the classifier and the parameters for the features part are frozen.
 
 # %%
-## TODO: Use a pretrained model to classify the cat and dog images
+## Use a pretrained model to classify the cat and dog images
+model = models.resnet18(pretrained=True)
+model
 
+# %%
+for param in model.parameters():
+    param.requires_grad = False
 
+# %%
+classifier = nn.Sequential(OrderedDict([
+    ('fc1', nn.Linear(512, 2)),
+    ('output', nn.LogSoftmax(dim=1))
+]))
+model.fc = classifier
+
+# %%
+if torch.cuda.is_available():
+    model = model.cuda()
+
+criterion = nn.NLLLoss()
+optimizer = optim.Adam(model.fc.parameters(), lr=0.003)
+
+epochs = 30
+for epoch in tqdm(range(epochs)):
+    model.train()
+    train_loss = 0
+    for inputs, labels in trainloader:
+        if torch.cuda.is_available():
+            inputs = inputs.cuda()
+            labels = labels.cuda()
+
+        outputs = model.forward(inputs)
+        loss = criterion(outputs, labels)
+        train_loss += loss.item()
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+    else:
+        with torch.no_grad():
+            model.eval()
+            val_loss = 0
+            accuracy = 0
+            for inputs, labels in testloader:
+                if torch.cuda.is_available():
+                    inputs = inputs.cuda()
+                    labels = labels.cuda()
+
+                outputs = model.forward(inputs)
+                loss = criterion(outputs, labels)
+                val_loss += loss.item()
+
+                _, predictions = outputs.topk(1)
+                equals = (labels == predictions.view(*labels.shape))
+                accuracy += torch.mean(equals.type(torch.FloatTensor))
+                
+            train_loss = train_loss / len(trainloader)
+            val_loss = val_loss / len(testloader)
+            accuracy = accuracy / len(testloader)
+            print('Train loss {}'.format(train_loss))
+            print('Val loss {}'.format(val_loss))
+            print('Val accuracy {}%'.format(accuracy*100))
+
+# %%
