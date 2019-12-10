@@ -22,6 +22,7 @@ except:
 # The test set contains images just like the training set. Typically you'll see 10-20% of the original dataset held out for testing and validation with the rest being used for training.
 
 # %%
+from tqdm import tqdm
 import torch
 from torchvision import datasets, transforms
 
@@ -127,11 +128,11 @@ model = Classifier()
 criterion = nn.NLLLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.003)
 
-epochs = 30
+epochs = 100
 steps = 0
 
 train_losses, test_losses = [], []
-for e in range(epochs):
+for e in tqdm(range(epochs)):
     running_loss = 0
     for images, labels in trainloader:
         
@@ -145,8 +146,31 @@ for e in range(epochs):
         running_loss += loss.item()
         
     else:
-        ## TODO: Implement the validation pass and print out the validation accuracy
+        ## Implement the validation pass and print out the validation accuracy
+        with torch.no_grad():
+          test_loss = 0
+          accuracy = 0
+        
+          for images, labels in testloader:
+            outputs = model.forward(images)
+            loss = criterion(outputs, labels)
+            test_loss += loss.item()
+            _, predictions = outputs.topk(1)
+            equals = (labels == predictions.view(*labels.shape))
+            accuracy += torch.mean(equals.type(torch.FloatTensor))
+        
+        running_loss = running_loss / len(trainloader)
+        test_loss = test_loss / len(testloader)
+        train_losses.append(running_loss)
+        test_losses.append(test_loss)
+        accuracy = accuracy / len(testloader)
+        print(f'Train loss: {running_loss}')
+        print(f'Test loss: {test_loss}')
         print(f'Accuracy: {accuracy.item()*100}%')
+print('Train losses')
+print(train_losses)
+print('Test losses')
+print(test_losses)
 
 # %% [markdown]
 # ## Overfitting
@@ -206,11 +230,80 @@ for e in range(epochs):
 # > **Exercise:** Add dropout to your model and train it on Fashion-MNIST again. See if you can get a lower validation loss or higher accuracy.
 
 # %%
-## TODO: Define your model with dropout added
+## Define your model with dropout added
+class ClassifierDropout(nn.Module):
+    def __init__(self):
+        super().__init__()
+        input_size = 28 * 28
+        fc1_size = 256
+        fc2_size = 128
+        fc3_size = 64
+        output_size = 10
+        dropout = 0.2
+        self.model = nn.Sequential(nn.Linear(input_size, fc1_size),
+                                    nn.ReLU(),
+                                    nn.Dropout(p=dropout),
+                                    nn.Linear(fc1_size, fc2_size),
+                                    nn.ReLU(),
+                                    nn.Dropout(p=dropout),
+                                    nn.Linear(fc2_size, fc3_size),
+                                    nn.ReLU(),
+                                    nn.Dropout(p=dropout),
+                                    nn.Linear(fc3_size, output_size),
+                                    nn.LogSoftmax(dim=1))
 
+    def forward(self, x):
+        x = x.view(x.shape[0], -1)
+        return self.model.forward(x)  
 
 # %%
-## TODO: Train your model with dropout, and monitor the training progress with the validation loss and accuracy
+## Train your model with dropout, and monitor the training progress with the validation loss and accuracy
+model = ClassifierDropout()
+optimizer = optim.Adam(model.parameters(), lr=0.003)
+criterion = nn.NLLLoss()
+epochs = 100
+
+train_losses, test_losses = [], []
+for epoch in tqdm(range(epochs)):
+    model.train()
+    train_loss = 0
+    for images, labels in trainloader:
+        outputs = model.forward(images)
+        loss = criterion(outputs, labels)
+        train_loss += loss.item()
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+    else:
+        with torch.no_grad():
+            model.eval()
+            val_loss = 0
+            accuracy = 0
+            for images, labels in testloader:
+                outputs = model.forward(images)
+                loss = criterion(outputs, labels)
+                val_loss += loss.item()
+
+                _, predictions = outputs.topk(1)
+                equals = (labels == predictions.view(*labels.shape))
+                accuracy += torch.mean(equals.type(torch.FloatTensor))
+        
+        train_loss = train_loss / len(trainloader)
+        val_loss = val_loss / len(testloader)
+        train_losses.append(train_loss)
+        test_losses.append(test_loss)
+        accuracy = accuracy / len(testloader)
+        print('Training loss: {}'.format(train_loss))
+        print('Validation loss: {}'.format(val_loss))
+        print('Accuracy: {}%'.format(accuracy*100))
+print('Train losses')
+print(train_losses)
+print('Test losses')
+print(test_losses)        
+
+
 
 # %% [markdown]
 # ## Inference
@@ -245,3 +338,6 @@ helper.view_classify(img.view(1, 28, 28), ps, version='Fashion')
 # 
 # In the next part, I'll show you how to save your trained models. In general, you won't want to train a model everytime you need it. Instead, you'll train once, save it, then load the model when you want to train more or use if for inference.
 
+
+
+# %%
